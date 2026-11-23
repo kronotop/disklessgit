@@ -65,9 +65,9 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
             description = "Port the server listens on for client connections.")
     private Integer port;
 
-    @Option(names = "--kronotop-servers", paramLabel = "<host:port>", split = ",",
-            description = "Comma-separated list of Kronotop servers to connect to.")
-    private List<String> kronotopServers;
+    @Option(names = "--kronotop-bootstrap-servers", paramLabel = "<host:port>", split = ",",
+            description = "Comma-separated list of Kronotop servers used to discover the cluster topology.")
+    private List<String> kronotopBootstrapServers;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisklessGitInstanceStarter.class);
 
@@ -138,7 +138,7 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
         Map<String, Object> overrides = new HashMap<>();
         putIfSet(overrides, "server.host", host);
         putIfSet(overrides, "server.port", port);
-        putIfSet(overrides, "kronotop.servers", withoutBlanks(kronotopServers));
+        putIfSet(overrides, "kronotop.bootstrap_servers", withoutBlanks(kronotopBootstrapServers));
 
         // Precedence: command line options, -D system properties, config file, reference.conf
         return ConfigFactory.parseMap(overrides, "command line options")
@@ -188,7 +188,7 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
                 Runtime.getRuntime().availableProcessors(),
                 formatBytes(Runtime.getRuntime().maxMemory()));
         LOGGER.info("Server:   {}:{}", config.getString("server.host"), config.getInt("server.port"));
-        LOGGER.info("Kronotop: {}", String.join(", ", config.getStringList("kronotop.servers")));
+        LOGGER.info("Kronotop: {}", String.join(", ", config.getStringList("kronotop.bootstrap_servers")));
         LOGGER.info("Ready to accept connections in {} ms",
                 ManagementFactory.getRuntimeMXBean().getUptime());
     }
