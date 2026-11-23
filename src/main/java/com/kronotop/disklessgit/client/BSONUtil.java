@@ -16,12 +16,16 @@
 
 package com.kronotop.disklessgit.client;
 
+import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
+
+import java.nio.ByteBuffer;
 
 public final class BSONUtil {
     private static final EncoderContext ENCODER_CONTEXT = EncoderContext.builder().isEncodingCollectibleDocument(true).build();
@@ -35,6 +39,12 @@ public final class BSONUtil {
             BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
             BSON_DOCUMENT_CODEC.encode(writer, document, ENCODER_CONTEXT);
             return buffer.toByteArray();
+        }
+    }
+
+    public static BsonDocument toBsonDocument(byte[] bytes) {
+        try (BsonBinaryReader reader = new BsonBinaryReader(ByteBuffer.wrap(bytes))) {
+            return BSON_DOCUMENT_CODEC.decode(reader, DecoderContext.builder().build());
         }
     }
 }

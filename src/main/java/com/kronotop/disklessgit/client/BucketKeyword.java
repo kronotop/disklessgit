@@ -25,7 +25,16 @@ public enum BucketKeyword implements Rawable {
     COLLATION,
     IF_NOT_EXISTS("IF-NOT-EXISTS"),
     NAMESPACE,
-    DOCS;
+    DOCS,
+    SORTBY,
+    RESULTSORT,
+    PROJECTION,
+    BATCH,
+    LIMIT,
+    CLOSE,
+    QUERY,
+    DELETE,
+    UPDATE;
 
     private final byte[] raw;
 

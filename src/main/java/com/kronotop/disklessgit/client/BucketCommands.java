@@ -68,4 +68,82 @@ public final class BucketCommands {
         }
         return session.execute(new CommandObject<>(args, BuilderFactory.BINARY_LIST));
     }
+
+    public BucketQueryResult query(String bucket, BsonDocument query) {
+        return query(bucket, query, new BucketQueryArgs());
+    }
+
+    public BucketQueryResult query(String bucket, BsonDocument query, BucketQueryArgs options) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_QUERY)
+                .add(bucket)
+                .add(BSONUtil.toBytes(query))
+                .addParams(options);
+        return session.execute(new CommandObject<>(args, BucketQueryResultBuilder.INSTANCE));
+    }
+
+    public BucketQueryResult advanceQuery(int cursorId) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_ADVANCE)
+                .add(BucketKeyword.QUERY)
+                .add(cursorId);
+        return session.execute(new CommandObject<>(args, BucketQueryResultBuilder.INSTANCE));
+    }
+
+    public BucketObjectIdsResult delete(String bucket, BsonDocument query) {
+        return delete(bucket, query, new BucketDeleteArgs());
+    }
+
+    public BucketObjectIdsResult delete(String bucket, BsonDocument query, BucketDeleteArgs options) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_DELETE)
+                .add(bucket)
+                .add(BSONUtil.toBytes(query))
+                .addParams(options);
+        return session.execute(new CommandObject<>(args, BucketObjectIdsResultBuilder.INSTANCE));
+    }
+
+    public BucketObjectIdsResult update(String bucket, BsonDocument query, BsonDocument update) {
+        return update(bucket, query, update, new BucketUpdateArgs());
+    }
+
+    public BucketObjectIdsResult update(String bucket, BsonDocument query, BsonDocument update, BucketUpdateArgs options) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_UPDATE)
+                .add(bucket)
+                .add(BSONUtil.toBytes(query))
+                .add(BSONUtil.toBytes(update))
+                .addParams(options);
+        return session.execute(new CommandObject<>(args, BucketObjectIdsResultBuilder.INSTANCE));
+    }
+
+    public BucketObjectIdsResult advanceDelete(int cursorId) {
+        return advance(BucketKeyword.DELETE, cursorId);
+    }
+
+    public BucketObjectIdsResult advanceUpdate(int cursorId) {
+        return advance(BucketKeyword.UPDATE, cursorId);
+    }
+
+    private BucketObjectIdsResult advance(BucketKeyword operation, int cursorId) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_ADVANCE)
+                .add(operation)
+                .add(cursorId);
+        return session.execute(new CommandObject<>(args, BucketObjectIdsResultBuilder.INSTANCE));
+    }
+
+    public void closeQuery(int cursorId) {
+        close(BucketKeyword.QUERY, cursorId);
+    }
+
+    public void closeDelete(int cursorId) {
+        close(BucketKeyword.DELETE, cursorId);
+    }
+
+    public void closeUpdate(int cursorId) {
+        close(BucketKeyword.UPDATE, cursorId);
+    }
+
+    private void close(BucketKeyword operation, int cursorId) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_CLOSE)
+                .add(operation)
+                .add(cursorId);
+        session.execute(new CommandObject<>(args, BuilderFactory.STRING));
+    }
 }
