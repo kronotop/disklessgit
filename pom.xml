@@ -9,6 +9,33 @@
     <version>0.1.0</version>
     <packaging>jar</packaging>
 
+    <name>DisklessGit</name>
+    <description>Stateless Git server backed by Kronotop</description>
+    <url>https://kronotop.com</url>
+
+    <licenses>
+        <license>
+            <name>Apache License, Version 2.0</name>
+            <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>buraksezer</id>
+            <name>Burak Sezer</name>
+            <email>burak.sezer@kronotop.com</email>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:https://github.com/kronotop/disklessgit.git</connection>
+        <developerConnection>scm:git:git@github.com:kronotop/disklessgit.git</developerConnection>
+        <url>https://github.com/kronotop/disklessgit</url>
+    </scm>
+
+
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
         <maven.compiler.target>25</maven.compiler.target>
