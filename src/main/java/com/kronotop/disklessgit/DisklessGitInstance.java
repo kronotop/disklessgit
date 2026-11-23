@@ -51,8 +51,8 @@ public class DisklessGitInstance implements AutoCloseable {
 
         Config config = context.getConfig();
         this.server = new Server(createThreadPool(config));
-        addConnector(GIT_CONNECTOR, config.getString("server.host"), config.getInt("server.port"));
-        addConnector(MANAGEMENT_CONNECTOR, config.getString("management.host"), config.getInt("management.port"));
+        addConnector(GIT_CONNECTOR, config.getString("http.git.host"), config.getInt("http.git.port"));
+        addConnector(MANAGEMENT_CONNECTOR, config.getString("http.management.host"), config.getInt("http.management.port"));
     }
 
     private static QueuedThreadPool createThreadPool(Config config) {
@@ -70,20 +70,20 @@ public class DisklessGitInstance implements AutoCloseable {
     }
 
     private static void configureBlockCache(Config config) {
-        long blockSize = config.getBytes("dfs.block_cache.block_size");
-        long blockLimit = config.getBytes("dfs.block_cache.block_limit");
+        long blockSize = config.getBytes("jgit.dfs.block_cache.block_size");
+        long blockLimit = config.getBytes("jgit.dfs.block_cache.block_limit");
         if (blockSize <= 0 || blockSize > Integer.MAX_VALUE || (blockSize & (blockSize - 1)) != 0) {
-            throw new ConfigException("dfs.block_cache.block_size must be a power of 2: " + blockSize);
+            throw new ConfigException("jgit.dfs.block_cache.block_size must be a power of 2: " + blockSize);
         }
         if (blockLimit < blockSize) {
-            throw new ConfigException("dfs.block_cache.block_limit must be greater than or equal to block_size: " + blockLimit);
+            throw new ConfigException("jgit.dfs.block_cache.block_limit must be greater than or equal to block_size: " + blockLimit);
         }
         try {
             DfsBlockCache.reconfigure(new DfsBlockCacheConfig()
                     .setBlockSize((int) blockSize)
                     .setBlockLimit(blockLimit));
         } catch (IllegalArgumentException e) {
-            throw new ConfigException("Invalid dfs.block_cache configuration: " + e.getMessage());
+            throw new ConfigException("Invalid jgit.dfs.block_cache configuration: " + e.getMessage());
         }
     }
 
