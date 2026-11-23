@@ -23,7 +23,8 @@ public enum KronotopCommand implements ProtocolCommand {
     NAMESPACE,
     SESSION_CLOSE("SESSION.CLOSE"),
     BUCKET_CREATE("BUCKET.CREATE"),
-    BUCKET_LOCATE("BUCKET.LOCATE");
+    BUCKET_LOCATE("BUCKET.LOCATE"),
+    BUCKET_INSERT("BUCKET.INSERT");
 
     private final byte[] raw;
 

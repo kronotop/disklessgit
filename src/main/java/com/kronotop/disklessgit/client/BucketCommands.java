@@ -16,9 +16,12 @@
 
 package com.kronotop.disklessgit.client;
 
+import org.bson.BsonDocument;
 import redis.clients.jedis.BuilderFactory;
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.CommandObject;
+
+import java.util.List;
 
 public final class BucketCommands {
     private final Session session;
@@ -48,5 +51,21 @@ public final class BucketCommands {
             args.add(BucketKeyword.NAMESPACE).add(namespace);
         }
         return session.execute(new CommandObject<>(args, BucketLocationBuilder.INSTANCE));
+    }
+
+    public List<byte[]> insert(String bucket, List<BsonDocument> documents) {
+        return insert(bucket, null, documents);
+    }
+
+    public List<byte[]> insert(String bucket, String namespace, List<BsonDocument> documents) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_INSERT).add(bucket);
+        if (namespace != null) {
+            args.add(BucketKeyword.NAMESPACE).add(namespace);
+        }
+        args.add(BucketKeyword.DOCS);
+        for (BsonDocument document : documents) {
+            args.add(BSONUtil.toBytes(document));
+        }
+        return session.execute(new CommandObject<>(args, BuilderFactory.BINARY_LIST));
     }
 }
