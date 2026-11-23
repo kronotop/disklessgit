@@ -19,6 +19,8 @@ package com.kronotop.disklessgit;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
+import com.typesafe.config.ConfigParseOptions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
@@ -29,6 +31,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.BindException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
 
@@ -64,7 +69,7 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
 
     @Option(names = "--kronotop-servers", paramLabel = "<host:port>", split = ",",
             description = "Comma-separated list of Kronotop servers to connect to.")
-    private String[] kronotopServers;
+    private List<String> kronotopServers;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisklessGitInstanceStarter.class);
 
@@ -104,6 +109,7 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
             LOGGER.error("{}: {}", message, getRootCause(e).getMessage());
         }
     }
+
     private static void applyLogLevel(String name) {
         Level level = Level.toLevel(name, null);
         if (level == null) {
@@ -113,6 +119,40 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
         context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(level);
     }
 
+    private static List<String> withoutBlanks(List<String> values) {
+        return values == null ? null : values.stream().filter(value -> !value.isBlank()).toList();
+    }
+
+    private static void putIfSet(Map<String, Object> overrides, String path, Object value) {
+        if (value != null) {
+            overrides.put(path, value);
+        }
+    }
+
+    Config loadApplicationConfig() {
+        if (configFile == null) {
+            return ConfigFactory.defaultApplication();
+        }
+        return ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
+    }
+
+    Config buildConfig() {
+        Map<String, Object> overrides = new HashMap<>();
+        putIfSet(overrides, "server.host", host);
+        putIfSet(overrides, "server.port", port);
+        putIfSet(overrides, "kronotop.servers", withoutBlanks(kronotopServers));
+
+        // Precedence: command line options, -D system properties, config file, reference.conf
+        return ConfigFactory.parseMap(overrides, "command line options")
+                .withFallback(ConfigFactory.defaultOverrides())
+                .withFallback(loadApplicationConfig())
+                .withFallback(ConfigFactory.defaultReference())
+                .resolve();
+    }
+
+    private static int start(Config config) {
+        return 0;
+    }
 
     @Override
     public Integer call() {
@@ -121,11 +161,12 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
             if (logLevel != null) {
                 applyLogLevel(logLevel);
             }
+            config = buildConfig();
         } catch (Exception e) {
             logFailure("Invalid configuration", e);
             return 1;
         }
-        return 0;
+        return start(config);
     }
 
 
