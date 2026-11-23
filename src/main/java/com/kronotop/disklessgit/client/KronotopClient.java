@@ -16,6 +16,8 @@
 
 package com.kronotop.disklessgit.client;
 
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import redis.clients.jedis.Connection;
 import redis.clients.jedis.ConnectionPool;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisClientConfig;
@@ -26,15 +28,20 @@ import java.util.List;
 public final class KronotopClient implements AutoCloseable {
     private final List<Member> members;
 
-    public KronotopClient(List<HostAndPort> bootstrapServers, JedisClientConfig config) {
+    public KronotopClient(List<HostAndPort> bootstrapServers, JedisClientConfig config,
+                          GenericObjectPoolConfig<Connection> poolConfig) {
         if (bootstrapServers == null || bootstrapServers.isEmpty()) {
             throw new IllegalArgumentException("kronotop.bootstrap_servers must not be empty");
         }
         List<Member> list = new ArrayList<>(bootstrapServers.size());
         for (HostAndPort address : bootstrapServers) {
-            list.add(new Member(address, new ConnectionPool(address, config)));
+            list.add(new Member(address, new ConnectionPool(address, config, poolConfig)));
         }
         this.members = List.copyOf(list);
+    }
+
+    public Session session() {
+        return new Session(members.getFirst().pool());
     }
 
     public Session session(HostAndPort host) {

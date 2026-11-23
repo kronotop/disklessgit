@@ -51,6 +51,7 @@
         <jetty.version>12.1.15</jetty.version>
         <jedis.version>8.0.2</jedis.version>
         <bson.version>5.6.1</bson.version>
+        <jackson.version>3.3.0</jackson.version>
 
         <!-- Plugin versions -->
         <maven-surefire-plugin.version>3.6.1</maven-surefire-plugin.version>
@@ -104,6 +105,17 @@
             <groupId>org.mongodb</groupId>
             <artifactId>bson</artifactId>
             <version>${bson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jetbrains</groupId>
+            <artifactId>annotations</artifactId>
+            <version>26.1.0</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 
