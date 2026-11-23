@@ -22,7 +22,8 @@ import redis.clients.jedis.util.SafeEncoder;
 public enum KronotopCommand implements ProtocolCommand {
     NAMESPACE,
     SESSION_CLOSE("SESSION.CLOSE"),
-    BUCKET_CREATE("BUCKET.CREATE");
+    BUCKET_CREATE("BUCKET.CREATE"),
+    BUCKET_LOCATE("BUCKET.LOCATE");
 
     private final byte[] raw;
 

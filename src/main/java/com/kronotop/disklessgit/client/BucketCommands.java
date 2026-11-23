@@ -37,4 +37,16 @@ public final class BucketCommands {
                 .addParams(options);
         session.execute(new CommandObject<>(args, BuilderFactory.STRING));
     }
+
+    public BucketLocation locate(String bucket) {
+        return locate(bucket, null);
+    }
+
+    public BucketLocation locate(String bucket, String namespace) {
+        CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_LOCATE).add(bucket);
+        if (namespace != null) {
+            args.add(BucketKeyword.NAMESPACE).add(namespace);
+        }
+        return session.execute(new CommandObject<>(args, BucketLocationBuilder.INSTANCE));
+    }
 }
