@@ -20,6 +20,7 @@ public class DisklessGitException extends RuntimeException {
 
     public DisklessGitException() {
     }
+
     public DisklessGitException(final String message) {
         super(message);
     }

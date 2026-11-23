@@ -45,31 +45,24 @@ import static com.google.common.base.Throwables.getRootCause;
         sortOptions = false
 )
 public class DisklessGitInstanceStarter implements Callable<Integer> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(DisklessGitInstanceStarter.class);
     @Option(names = {"-h", "--help"}, usageHelp = true, description = "Show help.")
     private boolean helpRequested;
-
     @Option(names = {"-v", "--version"}, versionHelp = true, description = "Print version information and quit.")
     private boolean versionRequested;
-
     @Option(names = {"-c", "--config"}, paramLabel = "<file>", description = "Path to the config file.")
     private File configFile;
-
     @Option(names = "--log-level", paramLabel = "<level>", description = "Log level.")
     private String logLevel;
-
     @Option(names = "--host", paramLabel = "<host>",
             description = "Address the server listens on for client connections.")
     private String host;
-
     @Option(names = "--port", paramLabel = "<port>",
             description = "Port the server listens on for client connections.")
     private Integer port;
-
     @Option(names = "--kronotop-bootstrap-servers", paramLabel = "<host:port>", split = ",",
             description = "Comma-separated list of Kronotop servers used to discover the cluster topology.")
     private List<String> kronotopBootstrapServers;
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(DisklessGitInstanceStarter.class);
 
     static void main(String[] args) {
         int exitCode = new CommandLine(new DisklessGitInstanceStarter()).execute(args);
@@ -125,27 +118,6 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
         if (value != null) {
             overrides.put(path, value);
         }
-    }
-
-    Config loadApplicationConfig() {
-        if (configFile == null) {
-            return ConfigFactory.defaultApplication();
-        }
-        return ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
-    }
-
-    Config buildConfig() {
-        Map<String, Object> overrides = new HashMap<>();
-        putIfSet(overrides, "server.host", host);
-        putIfSet(overrides, "server.port", port);
-        putIfSet(overrides, "kronotop.bootstrap_servers", withoutBlanks(kronotopBootstrapServers));
-
-        // Precedence: command line options, -D system properties, config file, reference.conf
-        return ConfigFactory.parseMap(overrides, "command line options")
-                .withFallback(ConfigFactory.defaultOverrides())
-                .withFallback(loadApplicationConfig())
-                .withFallback(ConfigFactory.defaultReference())
-                .resolve();
     }
 
     static String resolveProperty(String value) {
@@ -216,6 +188,27 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
             logFailure("Failed to start DisklessGit instance", e);
             return 1;
         }
+    }
+
+    Config loadApplicationConfig() {
+        if (configFile == null) {
+            return ConfigFactory.defaultApplication();
+        }
+        return ConfigFactory.parseFile(configFile, ConfigParseOptions.defaults().setAllowMissing(false));
+    }
+
+    Config buildConfig() {
+        Map<String, Object> overrides = new HashMap<>();
+        putIfSet(overrides, "server.host", host);
+        putIfSet(overrides, "server.port", port);
+        putIfSet(overrides, "kronotop.bootstrap_servers", withoutBlanks(kronotopBootstrapServers));
+
+        // Precedence: command line options, -D system properties, config file, reference.conf
+        return ConfigFactory.parseMap(overrides, "command line options")
+                .withFallback(ConfigFactory.defaultOverrides())
+                .withFallback(loadApplicationConfig())
+                .withFallback(ConfigFactory.defaultReference())
+                .resolve();
     }
 
     @Override

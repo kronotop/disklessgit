@@ -18,27 +18,29 @@ package com.kronotop.disklessgit.client;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.BuilderFactory;
-import redis.clients.jedis.CommandArguments;
-import redis.clients.jedis.CommandObject;
-import redis.clients.jedis.Connection;
-import redis.clients.jedis.ConnectionPool;
+import redis.clients.jedis.*;
 
 public final class Session implements AutoCloseable {
     private static final Logger LOGGER = LoggerFactory.getLogger(Session.class);
 
     private final ConnectionPool pool;
     private final NamespaceCommands namespace;
+    private final BucketCommands bucket;
     private Connection connection;
     private boolean closed;
 
     Session(ConnectionPool pool) {
         this.pool = pool;
         this.namespace = new NamespaceCommands(this);
+        this.bucket = new BucketCommands(this);
     }
 
     public NamespaceCommands namespace() {
         return namespace;
+    }
+
+    public BucketCommands bucket() {
+        return bucket;
     }
 
     <T> T execute(CommandObject<T> command) {
