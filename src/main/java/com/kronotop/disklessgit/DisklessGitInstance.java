@@ -17,5 +17,5 @@
 package com.kronotop.disklessgit;
 
 public class DisklessGitInstance {
-
+    public static final String PRODUCT_NAME = "DisklessGit";
 }

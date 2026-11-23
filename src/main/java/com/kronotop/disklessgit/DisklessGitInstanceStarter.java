@@ -30,9 +30,11 @@ import picocli.CommandLine.Option;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
 import java.net.BindException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.Callable;
@@ -150,7 +152,53 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
                 .resolve();
     }
 
+    static String resolveProperty(String value) {
+        if (value == null || value.isBlank() || value.startsWith("${")) {
+            return "unknown";
+        }
+        return value;
+    }
+
+    static String formatBytes(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+        double kb = bytes / 1024.0;
+        if (kb < 1024) {
+            return String.format(Locale.ROOT, "%.0f KB", kb);
+        }
+        double mb = kb / 1024.0;
+        if (mb < 1024) {
+            return String.format(Locale.ROOT, "%.0f MB", mb);
+        }
+        return String.format(Locale.ROOT, "%.1f GB", mb / 1024.0);
+    }
+
+    private static void greeting(Config config) {
+        Properties props = loadApplicationProperties();
+
+        LOGGER.info("{}, a stateless Git server backed by Kronotop", DisklessGitInstance.PRODUCT_NAME);
+        LOGGER.info("Starting {} {} ({}, built {}) pid {}",
+                DisklessGitInstance.PRODUCT_NAME,
+                props.getProperty("disklessgit.version"),
+                resolveProperty(props.getProperty("disklessgit.git.commit")),
+                resolveProperty(props.getProperty("disklessgit.build.time")),
+                ProcessHandle.current().pid());
+        LOGGER.info("Runtime:  Java {} ({}), {}/{}, {} cores, {} heap",
+                System.getProperty("java.version"),
+                System.getProperty("java.vendor"),
+                System.getProperty("os.name"),
+                System.getProperty("os.arch"),
+                Runtime.getRuntime().availableProcessors(),
+                formatBytes(Runtime.getRuntime().maxMemory()));
+        LOGGER.info("Server:   {}:{}", config.getString("server.host"), config.getInt("server.port"));
+        LOGGER.info("Kronotop: {}", String.join(", ", config.getStringList("kronotop.servers")));
+        LOGGER.info("Ready to accept connections in {} ms",
+                ManagementFactory.getRuntimeMXBean().getUptime());
+    }
+
     private static int start(Config config) {
+        greeting(config);
         return 0;
     }
 
