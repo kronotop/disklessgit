@@ -1,0 +1,15 @@
+<configuration>
+    <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <charset>UTF-8</charset>
+            <Pattern>%d{"yyyy-MM-dd HH:mm:ss,SSS"} [%5level] [%thread] [%logger{1}]: %msg%n</Pattern>
+        </encoder>
+    </appender>
+
+    <property name="LOG_LEVEL" value="${log.level:-INFO}"/>
+
+    <root level="${LOG_LEVEL}">
+        <appender-ref ref="STDOUT"/>
+    </root>
+</configuration>
