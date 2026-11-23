@@ -41,6 +41,22 @@ public final class BucketCommands {
         session.execute(new CommandObject<>(args, BuilderFactory.STRING));
     }
 
+    public void remove(String bucket, String namespace) {
+        purgeOrRemove(KronotopCommand.BUCKET_REMOVE, bucket, namespace);
+    }
+
+    public void purge(String bucket, String namespace) {
+        purgeOrRemove(KronotopCommand.BUCKET_PURGE, bucket, namespace);
+    }
+
+    private void purgeOrRemove(KronotopCommand command, String bucket, String namespace) {
+        CommandArguments args = new CommandArguments(command).add(bucket);
+        if (namespace != null) {
+            args.add(BucketKeyword.NAMESPACE).add(namespace);
+        }
+        session.execute(new CommandObject<>(args, BuilderFactory.STRING));
+    }
+
     public BucketLocation locate(String bucket) {
         return locate(bucket, null);
     }

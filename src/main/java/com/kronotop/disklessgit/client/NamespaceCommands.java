@@ -20,6 +20,8 @@ import redis.clients.jedis.BuilderFactory;
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.CommandObject;
 
+import java.util.List;
+
 public final class NamespaceCommands {
     private final Session session;
 
@@ -38,6 +40,27 @@ public final class NamespaceCommands {
         if (ifNotExists) {
             args.add(NamespaceKeyword.IF_NOT_EXISTS);
         }
+        session.execute(new CommandObject<>(args, BuilderFactory.STRING));
+    }
+
+    public List<String> list(String namespace) {
+        CommandArguments args = new CommandArguments(KronotopCommand.NAMESPACE)
+                .add(NamespaceKeyword.LIST)
+                .add(namespace);
+        return session.execute(new CommandObject<>(args, BuilderFactory.STRING_LIST));
+    }
+
+    public void remove(String namespace) {
+        CommandArguments args = new CommandArguments(KronotopCommand.NAMESPACE)
+                .add(NamespaceKeyword.REMOVE)
+                .add(namespace);
+        session.execute(new CommandObject<>(args, BuilderFactory.STRING));
+    }
+
+    public void purge(String namespace) {
+        CommandArguments args = new CommandArguments(KronotopCommand.NAMESPACE)
+                .add(NamespaceKeyword.PURGE)
+                .add(namespace);
         session.execute(new CommandObject<>(args, BuilderFactory.STRING));
     }
 }

@@ -21,6 +21,9 @@ import redis.clients.jedis.util.SafeEncoder;
 
 public enum NamespaceKeyword implements Rawable {
     CREATE,
+    LIST,
+    REMOVE,
+    PURGE,
     IF_NOT_EXISTS("IF-NOT-EXISTS");
 
     private final byte[] raw;
