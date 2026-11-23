@@ -16,6 +16,65 @@
 
 package com.kronotop.disklessgit;
 
-public class DisklessGitInstance {
+import com.typesafe.config.Config;
+import org.eclipse.jetty.ee11.servlet.ServletContextHandler;
+import org.eclipse.jetty.ee11.servlet.ServletHolder;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jgit.http.server.GitServlet;
+import org.eclipse.jgit.http.server.resolver.AsIsFileService;
+import org.eclipse.jgit.internal.storage.dfs.DfsBlockCache;
+import org.eclipse.jgit.internal.storage.dfs.DfsBlockCacheConfig;
+import org.eclipse.jgit.transport.ReceivePack;
+
+import java.net.InetSocketAddress;
+
+public class DisklessGitInstance implements AutoCloseable {
     public static final String PRODUCT_NAME = "DisklessGit";
+    private final Context context;
+    private final Server server;
+
+    public DisklessGitInstance(Context context) {
+        this.context = context;
+
+        Config config = context.getConfig();
+        String host = config.getString("server.host");
+        int port = config.getInt("server.port");
+        this.server = new Server(new InetSocketAddress(host, port));
+    }
+
+    private static void configureBlockCache(Config config) {
+        long blockSize = config.getBytes("dfs.block_cache.block_size");
+        long blockLimit = config.getBytes("dfs.block_cache.block_limit");
+        if (blockSize <= 0 || blockSize > Integer.MAX_VALUE || (blockSize & (blockSize - 1)) != 0) {
+            throw new ConfigException("dfs.block_cache.block_size must be a power of 2: " + blockSize);
+        }
+        if (blockLimit < blockSize) {
+            throw new ConfigException("dfs.block_cache.block_limit must be greater than or equal to block_size: " + blockLimit);
+        }
+        try {
+            DfsBlockCache.reconfigure(new DfsBlockCacheConfig()
+                    .setBlockSize((int) blockSize)
+                    .setBlockLimit(blockLimit));
+        } catch (IllegalArgumentException e) {
+            throw new ConfigException("Invalid dfs.block_cache configuration: " + e.getMessage());
+        }
+    }
+
+    public void start() throws Exception {
+        configureBlockCache(context.getConfig());
+
+        GitServlet servlet = new GitServlet();
+        servlet.setReceivePackFactory((req, db) -> new ReceivePack(db));
+        servlet.setAsIsFileService(AsIsFileService.DISABLED);
+
+        ServletContextHandler servletCtx = new ServletContextHandler();
+        servletCtx.addServlet(new ServletHolder(servlet), "/*");
+
+        server.setHandler(servletCtx);
+        server.start();
+    }
+
+    public void close() throws Exception {
+        server.stop();
+    }
 }

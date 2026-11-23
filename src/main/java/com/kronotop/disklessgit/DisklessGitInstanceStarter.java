@@ -32,11 +32,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.net.BindException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 import static com.google.common.base.Throwables.getCausalChain;
@@ -197,9 +193,29 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
                 ManagementFactory.getRuntimeMXBean().getUptime());
     }
 
+    private static Thread createShutdownHook(DisklessGitInstance instance) {
+        return new Thread(() -> {
+            try {
+                instance.close();
+            } catch (Exception e) {
+                LOGGER.error("Failed to stop DisklessGit instance", e);
+            } finally {
+                LOGGER.info("Quit!");
+            }
+        });
+    }
+
     private static int start(Config config) {
-        greeting(config);
-        return 0;
+        try {
+            DisklessGitInstance instance = new DisklessGitInstance(new ContextImpl(config));
+            Runtime.getRuntime().addShutdownHook(createShutdownHook(instance));
+            instance.start();
+            greeting(config);
+            return 0;
+        } catch (Throwable e) {
+            logFailure("Failed to start DisklessGit instance", e);
+            return 1;
+        }
     }
 
     @Override
