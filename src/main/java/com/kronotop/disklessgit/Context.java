@@ -16,8 +16,11 @@
 
 package com.kronotop.disklessgit;
 
+import com.kronotop.disklessgit.client.KronotopClient;
 import com.typesafe.config.Config;
 
 public interface Context {
     Config getConfig();
+
+    KronotopClient getKronotopClient();
 }

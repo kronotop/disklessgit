@@ -14,20 +14,28 @@
  * limitations under the License.
  */
 
-
 package com.kronotop.disklessgit;
 
+import com.kronotop.disklessgit.client.KronotopClient;
+import com.kronotop.disklessgit.client.KronotopClientFactory;
 import com.typesafe.config.Config;
 
 public class ContextImpl implements Context {
     private final Config config;
+    private final KronotopClient kronotopClient;
 
     public ContextImpl(Config config) {
         this.config = config;
+        this.kronotopClient = KronotopClientFactory.create(config);
     }
 
     @Override
     public Config getConfig() {
         return config;
+    }
+
+    @Override
+    public KronotopClient getKronotopClient() {
+        return kronotopClient;
     }
 }
