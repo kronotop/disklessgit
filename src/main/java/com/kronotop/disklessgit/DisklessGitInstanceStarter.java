@@ -16,16 +16,24 @@
 
 package com.kronotop.disklessgit;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.LoggerContext;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.BindException;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+
+import static com.google.common.base.Throwables.getCausalChain;
+import static com.google.common.base.Throwables.getRootCause;
 
 @Command(
         name = "disklessgit-server",
@@ -39,6 +47,24 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
 
     @Option(names = {"-v", "--version"}, versionHelp = true, description = "Print version information and quit.")
     private boolean versionRequested;
+
+    @Option(names = {"-c", "--config"}, paramLabel = "<file>", description = "Path to the config file.")
+    private File configFile;
+
+    @Option(names = "--log-level", paramLabel = "<level>", description = "Log level.")
+    private String logLevel;
+
+    @Option(names = "--host", paramLabel = "<host>",
+            description = "Address the server listens on for client connections.")
+    private String host;
+
+    @Option(names = "--port", paramLabel = "<port>",
+            description = "Port the server listens on for client connections.")
+    private Integer port;
+
+    @Option(names = "--kronotop-servers", paramLabel = "<host:port>", split = ",",
+            description = "Comma-separated list of Kronotop servers to connect to.")
+    private String[] kronotopServers;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(DisklessGitInstanceStarter.class);
 
@@ -60,8 +86,45 @@ public class DisklessGitInstanceStarter implements Callable<Integer> {
         return props;
     }
 
+    static boolean isExpectedFailure(Throwable failure) {
+        for (Throwable cause : getCausalChain(failure)) {
+            if (cause instanceof ConfigException
+                    || cause instanceof com.typesafe.config.ConfigException
+                    || cause instanceof BindException) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void logFailure(String message, Throwable e) {
+        if (LOGGER.isDebugEnabled() || !isExpectedFailure(e)) {
+            LOGGER.error(message, e);
+        } else {
+            LOGGER.error("{}: {}", message, getRootCause(e).getMessage());
+        }
+    }
+    private static void applyLogLevel(String name) {
+        Level level = Level.toLevel(name, null);
+        if (level == null) {
+            throw new ConfigException("Unknown log level: '" + name + "'");
+        }
+        LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+        context.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME).setLevel(level);
+    }
+
+
     @Override
-    public Integer call() throws Exception {
+    public Integer call() {
+        Config config;
+        try {
+            if (logLevel != null) {
+                applyLogLevel(logLevel);
+            }
+        } catch (Exception e) {
+            logFailure("Invalid configuration", e);
+            return 1;
+        }
         return 0;
     }
 
