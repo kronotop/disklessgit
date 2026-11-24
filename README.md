@@ -2,6 +2,8 @@
 
 Stateless Git server backed by [Kronotop](https://github.com/kronotop/kronotop).
 
+> Millions of tiny Git repos, one cluster.
+
 ## Goal
 
 DisklessGit aims to give AI agents a state store that they can version and branch. It is built on Kronotop.
@@ -65,7 +67,7 @@ If everything goes well, you should see the startup logs:
 
 DisklessGit listens on two ports: 8080 for the Git protocol and 8081 for management.
 
-Push a giant repository to DisklessGit:
+Push a repository to DisklessGit. We use the OpenJDK repository here as a stress test:
 
 ```
 ➜  jdk git:(master) git remote -v
