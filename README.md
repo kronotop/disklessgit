@@ -95,7 +95,8 @@ To http://localhost:8080/openjdk/jdk.git
 
 All data is stored in Kronotop as pack files, together with its metadata.
 
-Check the stored data in Kronotop:
+Check the stored data in Kronotop. You can use `redis-cli`, `kronotop-cli`, or `valkey-cli`.
+See the [Kronotop quickstart](https://github.com/kronotop/kronotop#quickstart) for details.
 
 ```
 127.0.0.1:5484> namespace use disklessgit.openjdk.jdk
