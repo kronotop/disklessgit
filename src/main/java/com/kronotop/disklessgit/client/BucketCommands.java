@@ -21,6 +21,7 @@ import redis.clients.jedis.BuilderFactory;
 import redis.clients.jedis.CommandArguments;
 import redis.clients.jedis.CommandObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class BucketCommands {
@@ -74,13 +75,21 @@ public final class BucketCommands {
     }
 
     public List<byte[]> insert(String bucket, String namespace, List<BsonDocument> documents) {
+        List<byte[]> encoded = new ArrayList<>(documents.size());
+        for (BsonDocument document : documents) {
+            encoded.add(BSONUtil.toBytes(document));
+        }
+        return insertEncoded(bucket, namespace, encoded);
+    }
+
+    public List<byte[]> insertEncoded(String bucket, String namespace, List<byte[]> documents) {
         CommandArguments args = new CommandArguments(KronotopCommand.BUCKET_INSERT).add(bucket);
         if (namespace != null) {
             args.add(BucketKeyword.NAMESPACE).add(namespace);
         }
         args.add(BucketKeyword.DOCS);
-        for (BsonDocument document : documents) {
-            args.add(BSONUtil.toBytes(document));
+        for (byte[] document : documents) {
+            args.add(document);
         }
         return session.execute(new CommandObject<>(args, BuilderFactory.BINARY_LIST));
     }

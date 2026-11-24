@@ -26,6 +26,7 @@ public final class Session implements AutoCloseable {
     private final ConnectionPool pool;
     private final NamespaceCommands namespace;
     private final BucketCommands bucket;
+    private final TransactionCommands transaction;
     private Connection connection;
     private boolean closed;
 
@@ -33,6 +34,7 @@ public final class Session implements AutoCloseable {
         this.pool = pool;
         this.namespace = new NamespaceCommands(this);
         this.bucket = new BucketCommands(this);
+        this.transaction = new TransactionCommands(this);
     }
 
     public NamespaceCommands namespace() {
@@ -41,6 +43,10 @@ public final class Session implements AutoCloseable {
 
     public BucketCommands bucket() {
         return bucket;
+    }
+
+    public TransactionCommands transaction() {
+        return transaction;
     }
 
     <T> T execute(CommandObject<T> command) {

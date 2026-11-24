@@ -50,6 +50,13 @@ public final class NamespaceCommands {
         return session.execute(new CommandObject<>(args, BuilderFactory.STRING_LIST));
     }
 
+    public boolean exists(String namespace) {
+        CommandArguments args = new CommandArguments(KronotopCommand.NAMESPACE)
+                .add(NamespaceKeyword.EXISTS)
+                .add(namespace);
+        return session.execute(new CommandObject<>(args, BuilderFactory.BOOLEAN));
+    }
+
     public void remove(String namespace) {
         CommandArguments args = new CommandArguments(KronotopCommand.NAMESPACE)
                 .add(NamespaceKeyword.REMOVE)

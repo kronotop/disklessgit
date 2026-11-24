@@ -30,12 +30,17 @@ import java.nio.ByteBuffer;
 public final class BSONUtil {
     private static final EncoderContext ENCODER_CONTEXT = EncoderContext.builder().isEncodingCollectibleDocument(true).build();
     private static final Codec<BsonDocument> BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
+    private static final int DEFAULT_BUFFER_SIZE = 1024;
 
     private BSONUtil() {
     }
 
     public static byte[] toBytes(BsonDocument document) {
-        try (BasicOutputBuffer buffer = new BasicOutputBuffer()) {
+        return toBytes(document, DEFAULT_BUFFER_SIZE);
+    }
+
+    public static byte[] toBytes(BsonDocument document, int initialSize) {
+        try (BasicOutputBuffer buffer = new BasicOutputBuffer(initialSize)) {
             BsonBinaryWriter writer = new BsonBinaryWriter(buffer);
             BSON_DOCUMENT_CODEC.encode(writer, document, ENCODER_CONTEXT);
             return buffer.toByteArray();
