@@ -26,18 +26,10 @@ import redis.clients.jedis.exceptions.JedisDataException;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.kronotop.disklessgit.client.KronotopErrors.hasCode;
+
 public class RepositoryManager {
     private static final Logger LOGGER = LoggerFactory.getLogger(RepositoryManager.class);
-
-    private static final String PACKS = "packs";
-    private static final String CHUNKS = "chunks";
-    private static final String REFS = "refs";
-    private static final List<String> BUCKETS = List.of(PACKS, CHUNKS, REFS);
-    private static final String CHUNKS_INDEXES =
-            "{\"$compound\": [{\"name\": \"file_seq\", \"unique\": true, \"fields\": [" +
-                    "{\"selector\": \"file\", \"bson_type\": \"string\"}," +
-                    "{\"selector\": \"seq\", \"bson_type\": \"int32\"}]}]}";
-    private static final String REFS_INDEXES = "{\"name\": {\"bson_type\": \"string\", \"unique\": true}}";
 
     private static final String NAMESPACE_ALREADY_EXISTS = "NAMESPACEALREADYEXISTS";
     private static final String NAMESPACE_BEING_REMOVED = "NAMESPACEBEINGREMOVED";
@@ -53,11 +45,6 @@ public class RepositoryManager {
         this.client = client;
     }
 
-    private static boolean hasCode(JedisDataException e, String code) {
-        String message = e.getMessage();
-        return message != null && (message.equals(code) || message.startsWith(code + " "));
-    }
-
     private static void purge(Runnable command) {
         for (int attempt = 1; ; attempt++) {
             try {
@@ -71,7 +58,7 @@ public class RepositoryManager {
         }
     }
 
-    private static void dropBucket(Session session, String bucket, String namespace) {
+    private static void removeAndPurgeBucket(Session session, String bucket, String namespace) {
         try {
             session.bucket().remove(bucket, namespace);
         } catch (JedisDataException e) {
@@ -85,10 +72,10 @@ public class RepositoryManager {
         purge(() -> session.bucket().purge(bucket, namespace));
     }
 
-    private static void drop(Session session, String namespace) {
+    private static void removeAndPurgeRepository(Session session, String namespace) {
         try {
-            for (String bucket : BUCKETS) {
-                dropBucket(session, bucket, namespace);
+            for (String bucket : RepositoryBuckets.ALL) {
+                removeAndPurgeBucket(session, bucket, namespace);
             }
             session.namespace().remove(namespace);
         } catch (JedisDataException e) {
@@ -110,7 +97,7 @@ public class RepositoryManager {
         }
     }
 
-    private static List<RepositoryName> list(Session session, String owner) {
+    private static List<RepositoryName> listRepositories(Session session, String owner) {
         List<RepositoryName> repositories = new ArrayList<>();
         for (String name : children(session, RepositoryName.ownerNamespace(owner))) {
             repositories.add(new RepositoryName(owner, name));
@@ -130,12 +117,14 @@ public class RepositoryManager {
                 throw e;
             }
             try {
-                session.bucket().create(PACKS, new BucketCreateArgs().namespace(namespace));
-                session.bucket().create(CHUNKS, new BucketCreateArgs().indexes(CHUNKS_INDEXES).namespace(namespace));
-                session.bucket().create(REFS, new BucketCreateArgs().indexes(REFS_INDEXES).namespace(namespace));
+                session.bucket().create(RepositoryBuckets.PACKS, new BucketCreateArgs().namespace(namespace));
+                session.bucket().create(RepositoryBuckets.CHUNKS,
+                        new BucketCreateArgs().indexes(RepositoryBuckets.CHUNKS_INDEXES).namespace(namespace));
+                session.bucket().create(RepositoryBuckets.REFS,
+                        new BucketCreateArgs().indexes(RepositoryBuckets.REFS_INDEXES).namespace(namespace));
             } catch (RuntimeException e) {
                 try {
-                    drop(session, namespace);
+                    removeAndPurgeRepository(session, namespace);
                 } catch (RuntimeException rollback) {
                     LOGGER.warn("Failed to roll back repository '{}': {}", repository, rollback.getMessage());
                 }
@@ -144,9 +133,20 @@ public class RepositoryManager {
         }
     }
 
+    public boolean exists(RepositoryName repository) {
+        try (Session session = client.session()) {
+            return session.namespace().exists(repository.namespace());
+        } catch (JedisDataException e) {
+            if (hasCode(e, NAMESPACE_BEING_REMOVED)) {
+                return false;
+            }
+            throw e;
+        }
+    }
+
     public void delete(RepositoryName repository) {
         try (Session session = client.session()) {
-            drop(session, repository.namespace());
+            removeAndPurgeRepository(session, repository.namespace());
         } catch (JedisDataException e) {
             if (hasCode(e, NO_SUCH_NAMESPACE)) {
                 throw new NoSuchRepositoryException("No such repository: '" + repository + "'");
@@ -158,11 +158,11 @@ public class RepositoryManager {
         }
     }
 
-    public List<RepositoryName> list() {
+    public List<RepositoryName> listAll() {
         try (Session session = client.session()) {
             List<RepositoryName> repositories = new ArrayList<>();
             for (String owner : children(session, RepositoryName.ROOT_NAMESPACE)) {
-                repositories.addAll(list(session, owner));
+                repositories.addAll(listRepositories(session, owner));
             }
             return repositories;
         }
@@ -171,7 +171,7 @@ public class RepositoryManager {
     public List<RepositoryName> list(String owner) {
         RepositoryName.requireValid("owner", owner);
         try (Session session = client.session()) {
-            return list(session, owner);
+            return listRepositories(session, owner);
         }
     }
 }

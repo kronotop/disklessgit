@@ -16,6 +16,8 @@
 
 package com.kronotop.disklessgit;
 
+import com.kronotop.disklessgit.jgit.HeadPostReceiveHook;
+import com.kronotop.disklessgit.jgit.KronotopRepositoryResolver;
 import com.kronotop.disklessgit.management.RepositoryServlet;
 import com.kronotop.disklessgit.repository.RepositoryManager;
 import com.typesafe.config.Config;
@@ -28,7 +30,6 @@ import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.util.VirtualThreads;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
-import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.http.server.GitServlet;
 import org.eclipse.jgit.http.server.resolver.AsIsFileService;
 import org.eclipse.jgit.internal.storage.dfs.DfsBlockCache;
@@ -87,12 +88,14 @@ public class DisklessGitInstance implements AutoCloseable {
         }
     }
 
-    private static ServletContextHandler createGitHandler() {
+    private ServletContextHandler createGitHandler(RepositoryManager manager) {
         GitServlet servlet = new GitServlet();
-        servlet.setRepositoryResolver((req, name) -> {
-            throw new RepositoryNotFoundException(name);
+        servlet.setRepositoryResolver(new KronotopRepositoryResolver(manager, context.getKronotopClient()));
+        servlet.setReceivePackFactory((req, db) -> {
+            ReceivePack receivePack = new ReceivePack(db);
+            receivePack.setPostReceiveHook(new HeadPostReceiveHook());
+            return receivePack;
         });
-        servlet.setReceivePackFactory((req, db) -> new ReceivePack(db));
         servlet.setAsIsFileService(AsIsFileService.DISABLED);
 
         ServletContextHandler handler = new ServletContextHandler();
@@ -112,9 +115,7 @@ public class DisklessGitInstance implements AutoCloseable {
         server.addConnector(connector);
     }
 
-    private ServletContextHandler createManagementHandler() {
-        RepositoryManager manager = new RepositoryManager(context.getKronotopClient());
-
+    private ServletContextHandler createManagementHandler(RepositoryManager manager) {
         ServletContextHandler handler = new ServletContextHandler();
         handler.setVirtualHosts(List.of("@" + MANAGEMENT_CONNECTOR));
         handler.addServlet(new ServletHolder(new RepositoryServlet(manager)), RepositoryServlet.PATH_SPEC);
@@ -124,7 +125,8 @@ public class DisklessGitInstance implements AutoCloseable {
     public void start() throws Exception {
         configureBlockCache(context.getConfig());
 
-        server.setHandler(new ContextHandlerCollection(createGitHandler(), createManagementHandler()));
+        RepositoryManager manager = new RepositoryManager(context.getKronotopClient());
+        server.setHandler(new ContextHandlerCollection(createGitHandler(manager), createManagementHandler(manager)));
         try {
             server.start();
         } catch (IllegalStateException e) {

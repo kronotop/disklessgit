@@ -111,7 +111,7 @@ public class RepositoryServlet extends HttpServlet {
         List<String> segments = segments(req);
         handle(req, resp, () -> {
             switch (segments.size()) {
-                case 0 -> write(resp, HttpServletResponse.SC_OK, toBody(manager.list()));
+                case 0 -> write(resp, HttpServletResponse.SC_OK, toBody(manager.listAll()));
                 case 1 -> write(resp, HttpServletResponse.SC_OK, toBody(manager.list(segments.getFirst())));
                 default -> notFound(resp);
             }
