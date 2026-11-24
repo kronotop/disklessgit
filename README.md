@@ -14,7 +14,7 @@ directly.
 
 DisklessGit requires Java 25+.
 
-Clone the repository:
+Clone the repository and change into the `disklessgit` directory.
 
 ```
 git clone https://github.com/kronotop/disklessgit.git
