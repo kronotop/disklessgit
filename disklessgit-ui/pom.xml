@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.kronotop</groupId>
+        <artifactId>disklessgit-root</artifactId>
+        <version>0.1.0</version>
+    </parent>
+
+    <artifactId>disklessgit-ui</artifactId>
+    <packaging>jar</packaging>
+
+    <name>DisklessGit UI</name>
+    <description>Repository browser for DisklessGit</description>
+
+    <properties>
+        <main.class>com.kronotop.disklessgit.ui.DisklessGitUIStarter</main.class>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>gerrit-maven</id>
+            <url>https://gerrit-maven.storage.googleapis.com</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.kronotop</groupId>
+            <artifactId>disklessgit</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.gitiles</groupId>
+            <artifactId>gitiles-servlet</artifactId>
+            <version>${gitiles.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.gitiles</groupId>
+            <artifactId>blame-cache</artifactId>
+            <version>${gitiles.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit.archive</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.template</groupId>
+            <artifactId>soy</artifactId>
+            <version>${soy.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.code.gson</groupId>
+                    <artifactId>gson</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark</artifactId>
+            <version>${commonmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-autolink</artifactId>
+            <version>${commonmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-strikethrough</artifactId>
+            <version>${commonmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.commonmark</groupId>
+            <artifactId>commonmark-ext-gfm-tables</artifactId>
+            <version>${commonmark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>${commons-lang3.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>${commons-text.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.twalcari</groupId>
+            <artifactId>java-prettify</artifactId>
+            <version>${java-prettify.version}</version>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>shade</id>
+                        <configuration>
+                            <filters combine.children="append">
+                                <filter>
+                                    <artifact>com.kronotop:disklessgit</artifact>
+                                    <includes>
+                                        <include>com/kronotop/**</include>
+                                        <include>reference.conf</include>
+                                        <include>logback.xml</include>
+                                        <include>disklessgit-build.properties</include>
+                                    </includes>
+                                </filter>
+                                <filter>
+                                    <artifact>com.google.gitiles:gitiles-servlet</artifact>
+                                    <excludes>
+                                        <exclude>com/google/gitiles/HtmlDiffFormatter.class</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
