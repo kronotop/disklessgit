@@ -16,6 +16,7 @@
 
 package com.kronotop.disklessgit.jgit;
 
+import com.kronotop.disklessgit.repository.RepositoryName;
 import org.eclipse.jgit.internal.storage.dfs.DfsObjDatabase;
 import org.eclipse.jgit.internal.storage.dfs.DfsReaderOptions;
 import org.eclipse.jgit.internal.storage.dfs.DfsRepository;
@@ -26,16 +27,22 @@ import org.eclipse.jgit.lib.RefDatabase;
 import java.io.IOException;
 
 public final class KronotopRepository extends DfsRepository {
+    private final RepositoryName name;
     private final KronotopStore store;
     private final KronotopObjDatabase objdb;
     private final KronotopRefDatabase refdb;
 
     private KronotopRepository(Builder builder) {
         super(builder);
+        name = builder.name;
         store = builder.store;
         DfsReaderOptions options = builder.getReaderOptions() != null ? builder.getReaderOptions() : new DfsReaderOptions();
         objdb = new KronotopObjDatabase(this, builder.store, options);
         refdb = new KronotopRefDatabase(this, builder.store);
+    }
+
+    public RepositoryName name() {
+        return name;
     }
 
     public KronotopStore store() {
@@ -53,7 +60,13 @@ public final class KronotopRepository extends DfsRepository {
     }
 
     public static final class Builder extends DfsRepositoryBuilder<Builder, KronotopRepository> {
+        private RepositoryName name;
         private KronotopStore store;
+
+        public Builder setName(RepositoryName name) {
+            this.name = name;
+            return this;
+        }
 
         public Builder setStore(KronotopStore store) {
             this.store = store;

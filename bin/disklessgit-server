@@ -21,7 +21,7 @@ DISKLESSGIT_HOME="$(cd -P "$(dirname "$SOURCE")/.." && pwd)"
 # original-* jar produced by maven-shade-plugin.
 JAR="$DISKLESSGIT_HOME/lib/disklessgit.jar"
 if [ ! -f "$JAR" ]; then
-    JAR=$(find "$DISKLESSGIT_HOME/target" -maxdepth 1 -name 'disklessgit-*.jar' ! -name 'original-*' 2>/dev/null | head -1 || true)
+    JAR=$(find "$DISKLESSGIT_HOME/disklessgit/target" -maxdepth 1 -name 'disklessgit-*.jar' ! -name 'original-*' 2>/dev/null | head -1 || true)
 fi
 
 if [ -z "$JAR" ]; then

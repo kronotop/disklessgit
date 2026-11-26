@@ -56,7 +56,7 @@ public class DisklessGitInstance implements AutoCloseable {
         addConnector(MANAGEMENT_CONNECTOR, config.getString("http.management.host"), config.getInt("http.management.port"));
     }
 
-    private static QueuedThreadPool createThreadPool(Config config) {
+    public static QueuedThreadPool createThreadPool(Config config) {
         int minThreads = config.getInt("http.thread_pool.min_threads");
         int maxThreads = config.getInt("http.thread_pool.max_threads");
         if (minThreads < 1) {
@@ -70,7 +70,7 @@ public class DisklessGitInstance implements AutoCloseable {
         return threadPool;
     }
 
-    private static void configureBlockCache(Config config) {
+    public static void configureBlockCache(Config config) {
         long blockSize = config.getBytes("jgit.dfs.block_cache.block_size");
         long blockLimit = config.getBytes("jgit.dfs.block_cache.block_limit");
         if (blockSize <= 0 || blockSize > Integer.MAX_VALUE || (blockSize & (blockSize - 1)) != 0) {

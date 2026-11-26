@@ -68,6 +68,7 @@ public final class KronotopRepositoryResolver implements RepositoryResolver<Http
         }
         try {
             return new KronotopRepository.Builder()
+                    .setName(repository)
                     .setStore(new KronotopStore(client, repository.namespace()))
                     .build();
         } catch (IOException e) {
